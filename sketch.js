@@ -8,7 +8,8 @@ const NUM_PREDATORS = 10;
 
 
 function setup() {
-  createCanvas(1600, 1000);
+  // auto adjust the canvas size based on the window size
+  createCanvas(windowWidth * 0.99, windowHeight * 0.98);
   strokeWeight(3);
 
   for (let i = 0; i < NUM_FOODS; i++) {
