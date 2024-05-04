@@ -6,10 +6,19 @@ const NUM_FOODS = 50;
 const NUM_PREYS = 100;
 const NUM_PREDATORS = 10;
 const VOLUME = 0.2;
-const FRAMERATE = 40;
+const FRAMERATE = 48;
 let predator_info = true;
 let prey_info = false;
 let simulation_speed = 0.7;
+
+let preyData = [];
+let predatorData = [];
+let foodData = [];
+let graphHeight = 100; // Height of the graph
+let graphWidth; // Width of the graph, set in setup()
+let maxDataPoints = 2500; // Maximum data points to show on the graph
+// Initialize a variable to keep track of the highest number ever seen
+let globalMax = 0;
 
 // audio 1-5 is for eating a prey
 var audio1 = document.getElementById("audio1");
@@ -47,6 +56,7 @@ function setup() {
   // auto adjust the canvas size based on the window size
   createCanvas(windowWidth * 0.98, windowHeight * 0.88);
   frameRate(FRAMERATE);
+  graphWidth = width; // Set the width of the graph to match the canvas width
   strokeWeight(3);
 
   for (let i = 0; i < NUM_FOODS; i++) {
@@ -159,7 +169,75 @@ function draw() {
 
   // Display the number of predators and prey
   displayCounts();
+  updateData();
+  drawGraph();
 }
+
+function updateData() {
+  // Add new data points
+  if (frameCount % 1 === 0) { // Update data every 10 frames
+      preyData.push(preys.length);
+      predatorData.push(predators.length);
+      // foodData.push(foods.length);
+
+      // Update globalMax
+      let currentMax = max(preys.length, predators.length);
+      if (currentMax > globalMax) {
+          globalMax = currentMax;
+      }
+
+      // Limit data points to maxDataPoints
+      if (preyData.length > maxDataPoints) preyData.shift();
+      if (predatorData.length > maxDataPoints) predatorData.shift();
+      // if (foodData.length > maxDataPoints) foodData.shift();
+  }
+}
+
+function drawGraph() {
+  push();
+  let xStep = graphWidth / maxDataPoints;
+  strokeWeight(2);
+
+  // Function to map data point to graph coordinate
+  // By dividing val by max(...), I normalized my data to a range between 0 and 1.
+  // height: This sets the zero point for the y-axis at the bottom of the graph area
+  let mapY = (val) => height - (val / globalMax * graphHeight);
+
+  // Draw prey data
+  noFill()
+  stroke(0, 200, 0); // Green for prey
+  beginShape();
+  for (let i = 0; i < preyData.length; i++) {
+      let y = mapY(preyData[i])
+      console.log('prey', height - y);
+      vertex(i * xStep, y);
+  }
+  endShape();
+
+  // Draw predator data
+  stroke(255, 0, 0); // Red for predators
+  beginShape();
+  for (let i = 0; i < predatorData.length; i++) {
+    let y = mapY(predatorData[i])
+    console.log('predator', height - y);
+    vertex(i * xStep, y);
+  }
+  endShape();
+
+  // Draw food data
+  // Orange for food
+  // stroke(255, 165, 0);
+  // beginShape();
+  // for (let i = 0; i < foodData.length; i++) {
+  //   let y = mapY(foodData[i])
+  //   console.log('food', height - y);
+  //   vertex(i * xStep, y);
+  // }
+  // endShape();
+
+  pop();
+}
+
 
 // food generator
 function generateFood(num) {
@@ -401,7 +479,7 @@ class Predator {
       this.isStarved = false; // Flag to indicate if the predator is staved
       this.starveLimit = 15; // Time limit for starving
       this.preyEaten = 0; // Number of prey eaten 
-      this.preyRequiredtoReproduce = 4; // Number of prey required to reproduce
+      this.preyRequiredtoReproduce = 5; // Number of prey required to reproduce
     }
 
     chase(preys) {
