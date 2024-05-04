@@ -6,26 +6,56 @@
     <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
+    <audio id="audio1">
+        <source src="audio/1.m4a" type="audio/mp4">
+    </audio>
+    <audio id="audio2">
+        <source src="audio/2.m4a" type="audio/mp4">
+    </audio>
+    <audio id="audio3">
+        <source src="audio/3.m4a" type="audio/mp4">
+    </audio>
+    <audio id="audio4">
+        <source src="audio/4.m4a" type="audio/mp4">
+    </audio>
+    <audio id="audio5">
+        <source src="audio/5.m4a" type="audio/mp4">
+    </audio>
+    <audio id="prey_born1">
+        <source src="audio/prey_born1.m4a" type="audio/mp4">
+    </audio>
+    <audio id="prey_born2">
+        <source src="audio/prey_born2.m4a" type="audio/mp4">
+    </audio>
+    <audio id="prey_born3">
+        <source src="audio/prey_born3.m4a" type="audio/mp4">
+    </audio>
+    <audio id="predator_born">
+        <source src="audio/predator_born.m4a" type="audio/mp4">
+    </audio>
     <script src="sketch.js"></script>
+    
     <div id="controlPanel">
-        <label for="numFoods">Number of Foods:</label>
+        <label for="numFoods">Foods:</label>
         <input type="number" id="numFoods" value="50">
         
-        <label for="numPreys">Number of Preys:</label>
+        <label for="numPreys">Preys:</label>
         <input type="number" id="numPreys" value="100">
         
-        <label for="numPredators">Number of Predators:</label>
+        <label for="numPredators">Predators:</label>
         <input type="number" id="numPredators" value="10">
         
-        <button onclick="restartGame()">Restart Game</button>
-        <button onclick="togglePredatorInfo()">Predator Info</button>
-        <button onclick="togglePreyInfo()">Prey Info</button>
+        <button id="restartGame" onclick="restartGame()">Restart Game</button>
+        <button class="infoButtons" onclick="togglePredatorInfo()">Predator Info</button>
+        <button class="infoButtons" onclick="togglePreyInfo()">Prey Info</button>
+        <button class="utilityButtons" onclick="toggleAudio()">Toggle Sound Effects</button>
+        <br>
         <!-- create a Sim Speed slider from 0.5 to 2, with increment of 0.1 -->
         <!-- use changeSimulationSpeed() -->
         <label for="simSpeed">Sim Speed:</label>
-        <input type="range" id="simSpeed" min="0.5" max="2" step="0.1" value="1" oninput="changeSimulationSpeed()">
+        <input type="range" id="simSpeed" min="0.5" max="2" step="0.1" value="0.7" oninput="changeSimulationSpeed()">
         <!-- add a number showing the slider number controlled by a function -->
-        <span id="simSpeedValue">1</span>
+        <span id="simSpeedValue">0.7</span>
     </div>
 
 </body>

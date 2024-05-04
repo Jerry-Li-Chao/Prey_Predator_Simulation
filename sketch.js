@@ -5,14 +5,46 @@ let startTime = new Date(); // Capture start time upon first draw call
 const NUM_FOODS = 50;
 const NUM_PREYS = 100;
 const NUM_PREDATORS = 10;
-let predator_info = false;
+const VOLUME = 0.2;
+let predator_info = true;
 let prey_info = false;
-let simulation_speed = 1;
+let simulation_speed = 0.7;
+
+// audio 1-5 is for eating a prey
+var audio1 = document.getElementById("audio1");
+var audio2 = document.getElementById("audio2");
+var audio3 = document.getElementById("audio3");
+var audio4 = document.getElementById("audio4");
+var audio5 = document.getElementById("audio5");
+var prey_born1 = document.getElementById("prey_born1");
+var prey_born2 = document.getElementById("prey_born2");
+var prey_born3 = document.getElementById("prey_born3");
+var predator_dead = document.getElementById("predator_born");
+// Initial Muted
+audio1.muted = true;
+audio2.muted = true;
+audio3.muted = true;
+audio4.muted = true;
+audio5.muted = true;
+prey_born1.muted = true;
+prey_born2.muted = true;
+prey_born3.muted = true;
+predator_dead.muted = true;
+// Volumes audio 
+audio1.volume = VOLUME;
+audio2.volume = VOLUME;
+audio3.volume = VOLUME;
+audio4.volume = VOLUME;
+audio5.volume = VOLUME;
+prey_born1.volume = VOLUME;
+prey_born2.volume = VOLUME;
+prey_born3.volume = VOLUME;
+predator_dead.volume = VOLUME;
 
 
 function setup() {
   // auto adjust the canvas size based on the window size
-  createCanvas(windowWidth * 0.98, windowHeight * 0.90);
+  createCanvas(windowWidth * 0.98, windowHeight * 0.88);
   strokeWeight(3);
 
   for (let i = 0; i < NUM_FOODS; i++) {
@@ -57,6 +89,18 @@ function togglePredatorInfo(){
 
 function togglePreyInfo(){
     prey_info = !prey_info;
+}
+
+function toggleAudio() {
+  audio1.muted = !audio1.muted;
+  audio2.muted = !audio2.muted;
+  audio3.muted = !audio3.muted;
+  audio4.muted = !audio4.muted;
+  audio5.muted = !audio5.muted;
+  prey_born1.muted = !prey_born1.muted;
+  prey_born2.muted = !prey_born2.muted;
+  prey_born3.muted = !prey_born3.muted;
+  predator_dead.muted = !predator_dead.muted;
 }
 
 function changeSimulationSpeed(){
@@ -265,6 +309,17 @@ class Prey {
         if(this.foodEaten >= this.foodRequiredtoReproduce) {
             preys.push(new Prey(this.pos.x, this.pos.y)); // Reproduce at current location
             this.foodEaten = 0; // Reset the food eaten count
+            // play audio 1-3 randomly for reproducing a prey
+            let audio = Math.floor(Math.random() * 3) + 1;
+            if (audio == 1) {
+                prey_born1.play().catch(error => console.error("Failed to play muted audio automatically:", error));
+            }
+            else if (audio == 2) {
+                prey_born2.play().catch(error => console.error("Failed to play muted audio automatically:", error));
+            }
+            else {
+                prey_born3.play().catch(error => console.error("Failed to play muted audio automatically:", error));
+            }
         }
     }
   
@@ -278,14 +333,22 @@ class Prey {
     translate(this.pos.x, this.pos.y); // Move to the position of the prey
     rotate(this.velocity.heading()); // Rotate to align with the velocity vector
 
-    // Darker Green
-    fill(0, 200, 0);
+    // Body: Green fill with 50% transparency
+    fill(0, 200, 0, 127);
     noStroke();
     ellipse(0, 0, 10, 10);
 
-    // Draw stick-like rectangle indicating direction
-    fill(255, 255, 0); // Yellow color for the direction indicator
+    // Mouse: Draw stick-like rectangle indicating direction
+    fill(255, 255, 0, 127); // Yellow color for the direction indicator
     rect(8, -2, 6, 2); // Positioned to start from the edge of the ellipse
+
+    // Eyes
+    fill(0, 0, 0, 127); // Black color for the eyes
+    rect(0, -1, 2, 2); // One Eye
+    // fill(0, 0, 0); // Black color for the eyes
+    // rect(2, 0, 2, 2); // Right Eye
+    // rect(2, -3, 2, 2); // Left Eye
+
     pop(); // Restore the original drawing style settings
 
     if (prey_info) {
@@ -330,6 +393,7 @@ class Predator {
       this.starvingTime = (new Date() - this.lastCatchTime) / 1000 * simulation_speed;
       if (this.starvingTime > this.starveLimit) {
         this.isStarved = true;
+        predator_dead.play().catch(error => console.error("Failed to play muted audio automatically:", error));
       }
       else if (this.starvingTime >= this.starveLimit * 2 / 3) {
         this.Speed = this.speedConstant * 1.2; // Increase the speed when starving
@@ -364,11 +428,30 @@ class Predator {
                     preys.splice(index, 1);
                 }
                 this.lastCatchTime = new Date(); // Update the last catch time
+
                 // reproduce at the current location
                 this.preyEaten++;
                 if(this.preyEaten >= this.preyRequiredtoReproduce) {
                     predators.push(new Predator(this.pos.x, this.pos.y));
                     this.preyEaten = 0;
+                }
+
+                // play audio 1-5 randomly for eating a prey
+                let audio = Math.floor(Math.random() * 5) + 1;
+                if (audio == 1) {
+                    audio1.play().catch(error => console.error("Failed to play muted audio automatically:", error));
+                }
+                else if (audio == 2) {
+                    audio2.play().catch(error => console.error("Failed to play muted audio automatically:", error));
+                }
+                else if (audio == 3) {
+                    audio3.play().catch(error => console.error("Failed to play muted audio automatically:", error));
+                }
+                else if (audio == 4) {
+                    audio4.play().catch(error => console.error("Failed to play muted audio automatically:", error));
+                }
+                else {
+                    audio5.play().catch(error => console.error("Failed to play muted audio automatically:", error));
                 }
             } else {
                 if (d < this.catchDistance * 2) { 
@@ -428,7 +511,8 @@ class Predator {
           vertex(0, 0); // Close the shape back at the center
           endShape(CLOSE);
         }
-    
+        
+        
         // Draw the predator itself
         if(this.starvingTime >= this.starveLimit * 2 / 3) {
           // interpolate between red and black, based on the starving time
@@ -444,6 +528,11 @@ class Predator {
         fill(0, 0, 0); // Black color for the direction indicator
         rect(12, 1, 10, 2); // Positioned to start from the edge of the ellipse
         rect(12, -5, 10, 2); // Positioned to start from the edge of the ellipse
+
+        // Draw eyes
+        fill(0, 0, 0); // Black color for the eyes
+        rect(4, 3, 2, 2); // Right Eye
+        rect(4, -6, 2, 2); // Left Eye
     
         pop(); // Restore the original drawing style settings
     }
