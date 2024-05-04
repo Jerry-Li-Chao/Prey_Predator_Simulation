@@ -5,11 +5,14 @@ let startTime = new Date(); // Capture start time upon first draw call
 const NUM_FOODS = 50;
 const NUM_PREYS = 100;
 const NUM_PREDATORS = 10;
+let predator_info = false;
+let prey_info = false;
+let simulation_speed = 1;
 
 
 function setup() {
   // auto adjust the canvas size based on the window size
-  createCanvas(windowWidth * 0.99, windowHeight * 0.98);
+  createCanvas(windowWidth * 0.98, windowHeight * 0.90);
   strokeWeight(3);
 
   for (let i = 0; i < NUM_FOODS; i++) {
@@ -23,21 +26,61 @@ function setup() {
   }
 }
 
+function restartGame() {
+  // Retrieve values from HTML input fields
+  const NUM_FOODS = parseInt(document.getElementById('numFoods').value);
+  const NUM_PREYS = parseInt(document.getElementById('numPreys').value);
+  const NUM_PREDATORS = parseInt(document.getElementById('numPredators').value);
+
+  // Clear existing arrays
+  foods = [];
+  preys = [];
+  predators = [];
+
+  // Repopulate arrays with new objects
+  for (let i = 0; i < NUM_FOODS; i++) {
+      foods.push(new Food(random(width), random(height)));
+  }
+  for (let i = 0; i < NUM_PREYS; i++) {
+      preys.push(new Prey(random(width), random(height)));
+  }
+  for (let i = 0; i < NUM_PREDATORS; i++) {
+      predators.push(new Predator(random(width), random(height)));
+  }
+  startTime = new Date(); // Reset the start time
+  // Optionally reset any other relevant simulation state
+}
+
+function togglePredatorInfo(){
+    predator_info = !predator_info;
+}
+
+function togglePreyInfo(){
+    prey_info = !prey_info;
+}
+
+function changeSimulationSpeed(){
+    const slider_value = document.getElementById('simSpeed').value;
+    simulation_speed = parseFloat(slider_value);
+    document.getElementById("simSpeedValue").textContent = simulation_speed;
+}
+
 function draw() {
-    // sets the background color to a beige color
-    background(200);
+    // sets the background color to a light-blue color
+    background(173, 216, 230);
 
   // Generate food every 1 seconds
-    if (frameCount % 60 === 0) {
-        if (preys.length < 50) {
-            generateFood(10);
-        }
-        else if (preys.length < 100) {
-            generateFood(preys.length * 0.1);
-        }
-        else if (preys.length < 200) {
-            generateFood(preys.length * 0.04);
-        }
+    if (frameCount % Math.floor(60 / simulation_speed) === 0) {
+        generateFood(20);
+        // if (preys.length < 50) {
+        //     generateFood(10);
+        // }
+        // else if (preys.length < 100) {
+        //     generateFood(preys.length * 0.1);
+        // }
+        // else if (preys.length < 200) {
+        //     generateFood(preys.length * 0.04);
+        // }
 
         // Spawn more preys if the number is less than 10% of the initial population
         if (preys.length < NUM_PREYS * 0.1) {
@@ -45,6 +88,9 @@ function draw() {
         }
         if (predators.length < 1) {
             spawnPredator(2);
+        }
+        if (preys.length >= predators.length * 40) {
+            spawnPredator(1);
         }
     }
 
@@ -115,7 +161,7 @@ class Food {
     display() {
         push(); // Save the current drawing style settings
         // Orange Fill with 50% transparency
-        fill(255, 165, 0);
+        fill(255, 165, 0, 127);
         // generate random number 1-3, has to be integer
         if(this.shape == 1) {
             // Draw a diamond
@@ -142,9 +188,9 @@ class Prey {
   constructor(x, y) {
     this.pos = createVector(x, y);
     this.velocity = p5.Vector.random2D();
-    this.escapeSpeed = 1.8;  // Higher speed for escaping
-    this.normalSpeed = 1;  // Normal speed
-    this.closePredatorDist = 110;  // Distance to check for nearby predators
+    this.escapeSpeed = 3;  // Higher speed for escaping
+    this.normalSpeed = 2.8;  // Normal speed
+    this.closePredatorDist = 120;  // Distance to check for nearby predators
     // Random Initial facing direction
     this.direction = createVector(random(-1, 1), random(-1, 1)).normalize();
     this.foodEaten = 0; // Number of food eaten
@@ -197,12 +243,14 @@ class Prey {
       this.isBeingPursued = false;
       let randomAngle = random(-PI / 72, PI / 72); // Small angle change, ±2.5 degrees
       this.direction.rotate(randomAngle); // Slightly adjust the facing direction
-      let moveStep = p5.Vector.fromAngle(this.direction.heading()).mult(this.normalSpeed * 0.5);
+      let moveStep = p5.Vector.fromAngle(this.direction.heading()).mult(this.normalSpeed * 0.5 * simulation_speed);
       this.pos.add(moveStep); // Move in the adjusted direction
     }
   
-    // Limit the velocity to the appropriate maximum speed, add randomness
-    this.velocity.limit(isPredatorClose ? this.escapeSpeed + random(-0.2, 0.2) : this.normalSpeed + random(-0.4, 0.2));
+    // Limit the velocity to the appropriate maximum speed, add randomness, apply simulation speed
+    this.velocity.limit(isPredatorClose ? 
+      (this.escapeSpeed + random(-0.2, 0.2)) * simulation_speed 
+      : (this.normalSpeed + random(-0.4, 0.2)) * simulation_speed);
     this.pos.add(this.velocity);
 
     // Handle food consumption and reproduction
@@ -240,26 +288,31 @@ class Prey {
     rect(8, -2, 6, 2); // Positioned to start from the edge of the ellipse
     pop(); // Restore the original drawing style settings
 
-    push(); // Another push to draw the circle without affecting the rotation
-    translate(this.pos.x, this.pos.y); // Move the origin to the prey's position
-    if(this.isBeingPursued) {
-        stroke(255, 0, 0, 63); // Red stroke when being pursued
+    if (prey_info) {
+      push(); // Another push to draw the circle without affecting the rotation
+      translate(this.pos.x, this.pos.y); // Move the origin to the prey's position
+      if(this.isBeingPursued) {
+          stroke(255, 0, 0, 63); // Red stroke when being pursued
+      }
+      else {
+          stroke(255, 255, 0, 63); // Yellow stroke when not being pursued
+      }
+      noFill();
+      drawDottedCircle(0, 0, this.closePredatorDist); // Prey's escape awareness circle
+      pop(); // Restore the original drawing style settings
     }
-    else {
-        stroke(255, 255, 0, 63); // Yellow stroke when not being pursued
-    }
-    noFill();
-    drawDottedCircle(0, 0, this.closePredatorDist); // Prey's escape awareness circle
-    pop(); // Restore the original drawing style settings
+    
   }
 }
 
 class Predator {
     constructor(x, y) {
       this.pos = createVector(x, y);
-      this.maxSpeed = 2;
+      this.speedConstant = 3.1; // Speed constant
+      this.Speed = this.speedConstant; // Speed of the predator
       this.catchDistance = 10; // Distance at which prey is considered caught
-      this.visibilityRange = 120; // Predators can see prey within x pixels
+      this.visibilityConstant = 80; // Visibility range constant
+      this.visibilityRange = this.visibilityConstant; // Predators can see prey within x pixels
       this.viewAngle = PI / 3; // Viewing angle in radians (60 degrees to each side)
       // Random Initial facing direction
       this.direction = createVector(random(-1, 1), random(-1, 1)).normalize();
@@ -268,23 +321,23 @@ class Predator {
       this.isStarved = false; // Flag to indicate if the predator is staved
       this.starveLimit = 20; // Time limit for starving
       this.preyEaten = 0; // Number of prey eaten 
-      this.preyRequiredtoReproduce = 3; // Number of prey required to reproduce
+      this.preyRequiredtoReproduce = 4; // Number of prey required to reproduce
     }
 
     chase(preys) {
       let closest = null;
       let closestD = Infinity;
-      this.starvingTime = (new Date() - this.lastCatchTime) / 1000;
+      this.starvingTime = (new Date() - this.lastCatchTime) / 1000 * simulation_speed;
       if (this.starvingTime > this.starveLimit) {
         this.isStarved = true;
       }
       else if (this.starvingTime >= this.starveLimit * 2 / 3) {
-        this.maxSpeed = 2.5; // Increase the speed when starving
-        this.visibilityRange = 180; // Increase the visibility range when starving
+        this.Speed = this.speedConstant * 1.2; // Increase the speed when starving
+        this.visibilityRange = this.visibilityConstant * 1.5; // Increase the visibility range when starving
       }
       else {
-        this.maxSpeed = 2; // Reset the speed to the original value
-        this.visibilityRange = 120; // Reset the visibility range to the original value
+        this.Speed = this.speedConstant; // Reset the speed to the original value
+        this.visibilityRange = this.visibilityConstant; // Reset the visibility range to the original value
       }
 
       if(!this.isStarved) {
@@ -320,12 +373,14 @@ class Predator {
             } else {
                 if (d < this.catchDistance * 2) { 
                     // Start accelerating when twice the catch distance away
-                    let m = map(d, this.catchDistance * 2, this.catchDistance, this.maxSpeed, this.maxSpeed * 1.2);
+                    let m = map(d, this.catchDistance * 2, this.catchDistance, this.Speed, this.Speed * 1.2);
                     desired.setMag(m);
                 } else {
-                    desired.setMag(this.maxSpeed);
+                    desired.setMag(this.Speed);
                 }
-                desired.add(p5.Vector.random2D().mult(0.3)); // Add randomness to the movement
+                // apply simulation speed
+                desired.mult(simulation_speed);
+                desired.add(p5.Vector.random2D().mult(0.3 * simulation_speed)); // Add randomness to the movement
                 this.pos.add(desired);
                 this.direction = desired.copy().normalize(); // Update direction to face the prey
             }
@@ -333,7 +388,7 @@ class Predator {
             // If no prey is detected, move in a consistent direction with slight random deviations
             let randomAngle = random(-PI / 72, PI / 72); // Small angle change, ±2.5 degrees
             this.direction.rotate(randomAngle); // Slightly adjust the facing direction
-            let moveStep = p5.Vector.fromAngle(this.direction.heading()).mult(this.maxSpeed * 0.5);
+            let moveStep = p5.Vector.fromAngle(this.direction.heading()).mult(this.Speed * 0.5 * simulation_speed);
             this.pos.add(moveStep); // Move in the adjusted direction
         }
 
@@ -349,34 +404,44 @@ class Predator {
         push(); // Save the current drawing style settings
         translate(this.pos.x, this.pos.y); // Move to the position of the predator
         rotate(this.direction.heading()); // Rotate to align with the velocity vector
-    
-        // Draw visibility sector
-        fill(255, 255, 0, 63); // Yellow fill when not starving, with 25% transparency
-        if (this.starvingTime >= this.starveLimit * 2 / 3) {
-            fill(255, 0, 0, 63); // Red fill when starving, with 25% transparency
+        
+        if (predator_info) {
+          // Draw visibility sector
+          fill(255, 255, 0, 63); // Yellow fill when not starving, with 25% transparency
+          if (this.starvingTime >= this.starveLimit * 2 / 3) {
+              let r = map(this.starvingTime, this.starveLimit * 2 / 3, this.starveLimit, 255, 0);
+              fill(r, 0, 0, 63); // Red fill when starving, with 25% transparency
+          }
+          beginShape();
+          vertex(0, 0); // Center point
+      
+          let startAngle = -this.viewAngle / 2;
+          let endAngle = this.viewAngle / 2;
+      
+          // Draw the arc as a series of vertices
+          for (let a = startAngle; a <= endAngle; a += 0.01) {
+              let x = this.visibilityRange * cos(a);
+              let y = this.visibilityRange * sin(a);
+              vertex(x, y);
+          }
+      
+          vertex(0, 0); // Close the shape back at the center
+          endShape(CLOSE);
         }
-        beginShape();
-        vertex(0, 0); // Center point
-    
-        let startAngle = -this.viewAngle / 2;
-        let endAngle = this.viewAngle / 2;
-    
-        // Draw the arc as a series of vertices
-        for (let a = startAngle; a <= endAngle; a += 0.01) {
-            let x = this.visibilityRange * cos(a);
-            let y = this.visibilityRange * sin(a);
-            vertex(x, y);
-        }
-    
-        vertex(0, 0); // Close the shape back at the center
-        endShape(CLOSE);
     
         // Draw the predator itself
-        fill(255, 0, 0); // Solid red fill for the predator
+        if(this.starvingTime >= this.starveLimit * 2 / 3) {
+          // interpolate between red and black, based on the starving time
+          let r = map(this.starvingTime, this.starveLimit * 2 / 3, this.starveLimit, 255, 0);
+          fill(r, 0, 0); // Red fill when starving
+        }
+        else {
+          fill(255, 0, 0); // Solid red fill for the predator when not starving
+        }
         ellipse(0, 0, 20, 20);
-    
+        
         // Draw stick-like rectangle indicating direction
-        fill(0, 0, 0); // Blue color for the direction indicator
+        fill(0, 0, 0); // Black color for the direction indicator
         rect(12, 1, 10, 2); // Positioned to start from the edge of the ellipse
         rect(12, -5, 10, 2); // Positioned to start from the edge of the ellipse
     
