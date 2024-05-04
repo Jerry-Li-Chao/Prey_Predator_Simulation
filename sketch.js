@@ -6,6 +6,7 @@ const NUM_FOODS = 50;
 const NUM_PREYS = 100;
 const NUM_PREDATORS = 10;
 const VOLUME = 0.2;
+const FRAMERATE = 40;
 let predator_info = true;
 let prey_info = false;
 let simulation_speed = 0.7;
@@ -45,6 +46,7 @@ predator_dead.volume = VOLUME;
 function setup() {
   // auto adjust the canvas size based on the window size
   createCanvas(windowWidth * 0.98, windowHeight * 0.88);
+  frameRate(FRAMERATE);
   strokeWeight(3);
 
   for (let i = 0; i < NUM_FOODS; i++) {
@@ -114,17 +116,8 @@ function draw() {
     background(173, 216, 230);
 
   // Generate food every 1 seconds
-    if (frameCount % Math.floor(60 / simulation_speed) === 0) {
+    if (frameCount % Math.floor(FRAMERATE / simulation_speed) === 0) {
         generateFood(20);
-        // if (preys.length < 50) {
-        //     generateFood(10);
-        // }
-        // else if (preys.length < 100) {
-        //     generateFood(preys.length * 0.1);
-        // }
-        // else if (preys.length < 200) {
-        //     generateFood(preys.length * 0.04);
-        // }
 
         // Spawn more preys if the number is less than 10% of the initial population
         if (preys.length < NUM_PREYS * 0.1) {
@@ -156,6 +149,10 @@ function draw() {
         if (index > -1) {
             predators.splice(index, 1);
         }
+        // two foods will be generated at the location near the dead predator, with some randomness
+        foods.push(new Food(predator.pos.x + random(-10, 10), predator.pos.y + random(-10, 10)));
+        foods.push(new Food(predator.pos.x + random(-10, 10), predator.pos.y + random(-10, 10)));
+
     }
     predator.display();
   }
@@ -166,9 +163,20 @@ function draw() {
 
 // food generator
 function generateFood(num) {
-    for(let i = 0; i < num; i++) {
+  // half of the food will be generated at random locations
+    for(let i = 0; i < num / 2; i++) {
         foods.push(new Food(random(width), random(height)));
     }
+    // half of the food will be generated in clusters
+    let x = random(width);
+    let y = random(height);
+    for(let i = 0; i < num / 2; i++) {
+      // x, y needs to wrap around the canvas
+      x = (x + random(-20, 20) + width) % width;
+      y = (y + random(-20, 20) + height) % height;
+      foods.push(new Food(x, y));
+    }
+    
 }
 
 function spawnPrey() {
@@ -262,11 +270,20 @@ class Prey {
     });
 
     // Find the closest food
-    for (const food of foods) {
-      let d = p5.Vector.dist(this.pos, food.pos);
-      if (d < closestFoodDist) {
-        closestFood = food;
-        closestFoodDist = d;
+    if(!closestFood) {
+      for (const food of foods) {
+        let d = p5.Vector.dist(this.pos, food.pos);
+        // If the food is within xx pixels, 
+        // consider it as the closest food (hope this will increase the performance)
+        if(d < 50) {
+          closestFood = food;
+          closestFoodDist = d;
+          break;
+        }
+        if (d < closestFoodDist) {
+          closestFood = food;
+          closestFoodDist = d;
+        }
       }
     }
     
@@ -293,7 +310,7 @@ class Prey {
   
     // Limit the velocity to the appropriate maximum speed, add randomness, apply simulation speed
     this.velocity.limit(isPredatorClose ? 
-      (this.escapeSpeed + random(-0.2, 0.2)) * simulation_speed 
+      (this.escapeSpeed + random(-0.1, 0.4)) * simulation_speed 
       : (this.normalSpeed + random(-0.4, 0.2)) * simulation_speed);
     this.pos.add(this.velocity);
 
@@ -382,7 +399,7 @@ class Predator {
       this.lastCatchTime = new Date(); // Time of the last caught prey (initialized to 0)
       this.starvingTime = 0; // How long the predator has been starving
       this.isStarved = false; // Flag to indicate if the predator is staved
-      this.starveLimit = 20; // Time limit for starving
+      this.starveLimit = 15; // Time limit for starving
       this.preyEaten = 0; // Number of prey eaten 
       this.preyRequiredtoReproduce = 4; // Number of prey required to reproduce
     }
@@ -412,8 +429,8 @@ class Predator {
             let angleBetween = this.direction.angleBetween(preyDir);
 
             if (d < closestD && d < this.visibilityRange && abs(angleBetween) < this.viewAngle / 2) {
-            closest = prey;
-            closestD = d;
+              closest = prey;
+              closestD = d;
             }
         }
 
