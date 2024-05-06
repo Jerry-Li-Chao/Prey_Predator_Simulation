@@ -196,7 +196,7 @@ function killAllPredators() {
 
 let preySpawningMode = false;
 let lastSpawnTime = 0;
-let spawnRate = 1000 / 5; // 5 preys per second
+let spawnRate = 1000 / 8; // 8 preys per second
 
 function togglePreySpawningMode() {
   // if preySpawningMode is false and predatorSpawningMode is true, then disable predatorSpawningMode
