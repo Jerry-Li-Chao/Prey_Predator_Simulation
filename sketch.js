@@ -54,10 +54,22 @@ prey_born2.volume = VOLUME;
 prey_born3.volume = VOLUME;
 predator_dead.volume = VOLUME;
 
+function preventDefaultBehavior(e) {
+  e.preventDefault();
+}
 
 function setup() {
   // auto adjust the canvas size based on the window size
-  createCanvas(windowWidth * 0.98, windowHeight * 0.82);
+  let cnv = createCanvas(windowWidth * 0.98, windowHeight * 0.82);
+
+  // Add event listeners to prevent default behavior
+  cnv.elt.addEventListener('touchstart', preventDefaultBehavior, {passive: false});
+  cnv.elt.addEventListener('touchmove', preventDefaultBehavior, {passive: false});
+  cnv.elt.addEventListener('touchend', preventDefaultBehavior, {passive: false});
+  cnv.elt.addEventListener('mousedown', preventDefaultBehavior);
+  cnv.elt.addEventListener('mousemove', preventDefaultBehavior);
+
+
   frameRate(FRAMERATE);
   graphWidth = width; // Set the width of the graph to match the canvas width
   strokeWeight(3);
