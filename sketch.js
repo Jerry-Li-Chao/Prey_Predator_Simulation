@@ -7,9 +7,9 @@ const NUM_PREYS = 100;
 const NUM_PREDATORS = 10;
 const VOLUME = 0.2;
 const FRAMERATE = 48;
-let predator_info = true;
+let predator_info = false;
 let prey_info = false;
-let simulation_speed = 0.7;
+let simulation_speed = 1;
 
 let preyData = [];
 let predatorData = [];
@@ -54,7 +54,7 @@ predator_dead.volume = VOLUME;
 
 function setup() {
   // auto adjust the canvas size based on the window size
-  createCanvas(windowWidth * 0.98, windowHeight * 0.88);
+  createCanvas(windowWidth * 0.98, windowHeight * 0.86);
   frameRate(FRAMERATE);
   graphWidth = width; // Set the width of the graph to match the canvas width
   strokeWeight(3);
@@ -209,7 +209,7 @@ function drawGraph() {
   beginShape();
   for (let i = 0; i < preyData.length; i++) {
       let y = mapY(preyData[i])
-      console.log('prey', height - y);
+      // console.log('prey', height - y);
       vertex(i * xStep, y);
   }
   endShape();
@@ -219,7 +219,7 @@ function drawGraph() {
   beginShape();
   for (let i = 0; i < predatorData.length; i++) {
     let y = mapY(predatorData[i])
-    console.log('predator', height - y);
+    // console.log('predator', height - y);
     vertex(i * xStep, y);
   }
   endShape();

@@ -48,14 +48,15 @@
         <button id="restartGame" onclick="restartGame()">Restart Game</button>
         <button class="infoButtons" onclick="togglePredatorInfo()">Predator Info</button>
         <button class="infoButtons" onclick="togglePreyInfo()">Prey Info</button>
-        <button class="utilityButtons" onclick="toggleAudio()">Toggle Sound Effects</button>
+        <!-- <button class="utilityButtons" onclick="toggleAudio()">Toggle Sound Effects</button> -->
         <br>
         <!-- create a Sim Speed slider from 0.5 to 2, with increment of 0.1 -->
         <!-- use changeSimulationSpeed() -->
+        <br
         <label for="simSpeed">Sim Speed:</label>
-        <input type="range" id="simSpeed" min="0.5" max="2" step="0.1" value="0.7" oninput="changeSimulationSpeed()">
+        <input type="range" id="simSpeed" min="0.5" max="2" step="0.1" value="1" oninput="changeSimulationSpeed()">
         <!-- add a number showing the slider number controlled by a function -->
-        <span id="simSpeedValue">0.7</span>
+        <span id="simSpeedValue">1</span>
     </div>
 
 </body>
