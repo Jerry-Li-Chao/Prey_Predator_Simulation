@@ -37,3 +37,33 @@
     padding: 5px 10px;
     font-weight: bold;
 }
+
+.killButtons {
+    /* light yellow */
+    border: none;
+    background-color: #ffffcc;
+    color: black;
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-weight: bold;
+}
+
+.spawnButtons {
+    /* light green */
+    border: none;
+    background-color: #ccffcc;
+    color: black;
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-weight: bold;
+}
+
+.active {
+    /* dark-green */
+    border: none;
+    color: black;
+    border-radius: 5px;
+    padding: 5px 10px;
+    font-weight: bold;
+   background-color: #009900;
+}

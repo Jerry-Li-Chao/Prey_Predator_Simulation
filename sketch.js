@@ -20,6 +20,9 @@ let maxDataPoints = 2500; // Maximum data points to show on the graph
 // Initialize a variable to keep track of the highest number ever seen
 let globalMax = 0;
 
+let sweepPreys = { active: false, x: 0, width: 50 }; // Sweeping band properties
+let sweepPredators = { active: false, x: 0, width: 50 }; // Sweeping band properties
+
 // audio 1-5 is for eating a prey
 var audio1 = document.getElementById("audio1");
 var audio2 = document.getElementById("audio2");
@@ -54,7 +57,7 @@ predator_dead.volume = VOLUME;
 
 function setup() {
   // auto adjust the canvas size based on the window size
-  createCanvas(windowWidth * 0.98, windowHeight * 0.86);
+  createCanvas(windowWidth * 0.98, windowHeight * 0.82);
   frameRate(FRAMERATE);
   graphWidth = width; // Set the width of the graph to match the canvas width
   strokeWeight(3);
@@ -121,13 +124,132 @@ function changeSimulationSpeed(){
     document.getElementById("simSpeedValue").textContent = simulation_speed;
 }
 
+function activatePreySweep() {
+  sweepPreys.active = true;
+  sweepPreys.x = width; // Start from the right end of the canvas
+}
+
+function activatePredatorSweep() {
+  sweepPredators.active = true;
+  sweepPredators.x = width; // Start from the right end of the canvas
+}
+
+function killAllPreys() {
+  if (sweepPreys.active) {
+    fill(0, 200, 0, 100); // Semi-transparent red band
+    noStroke();
+    rect(sweepPreys.x, 0, sweepPreys.width, height);
+
+    // Move the sweep band left
+    sweepPreys.x -= 5; // Adjust speed as needed
+
+    // Check for prey within the sweep region
+    for (let i = preys.length - 1; i >= 0; i--) {
+        if (preys[i].pos.x >= sweepPreys.x && preys[i].pos.x <= sweepPreys.x + sweepPreys.width) {
+            preys.splice(i, 1); // Remove prey in the band
+        }
+    }
+
+    // Stop the sweep when it reaches the left edge
+    if (sweepPreys.x + sweepPreys.width <= 0) {
+        sweepPreys.active = false;
+    }
+  }
+} 
+
+
+function killAllPredators() {
+  if (sweepPredators.active) {
+    fill(255, 0, 0, 100); // Semi-transparent red band
+    noStroke();
+    rect(sweepPredators.x, 0, sweepPredators.width, height);
+
+    // Move the sweep band left
+    sweepPredators.x -= 5; // Adjust speed as needed
+
+    // Check for prey within the sweep region
+    for (let i = predators.length - 1; i >= 0; i--) {
+        if (predators[i].pos.x >= sweepPredators.x && predators[i].pos.x <= sweepPredators.x + sweepPredators.width) {
+          predators.splice(i, 1); // Remove prey in the band
+        }
+    }
+
+    // Stop the sweep when it reaches the left edge
+    if (sweepPredators.x + sweepPredators.width <= 0) {
+      sweepPredators.active = false;
+    }
+  }
+} 
+
+
+let preySpawningMode = false;
+let lastSpawnTime = 0;
+let spawnRate = 1000 / 5; // 5 preys per second
+
+function togglePreySpawningMode() {
+  // if preySpawningMode is false and predatorSpawningMode is true, then disable predatorSpawningMode
+  if (!preySpawningMode && predatorSpawningMode) {
+    togglePredatorSpawningMode();
+  }
+
+  preySpawningMode = !preySpawningMode; // Toggle spawning mode on and off
+  // add a className to the button to indicate the current mode
+  const button = document.getElementById('spawnPreyButton');
+  button.className = preySpawningMode ? 'spawnButtons active' : 'spawnButtons';
+}
+
+function manualSpawnPrey() {
+  // Check for spawning mode and mouse press
+  if (preySpawningMode && mouseIsPressed) {
+    if (millis() - lastSpawnTime > spawnRate) {
+        spawnPreyAt(mouseX, mouseY);
+        lastSpawnTime = millis(); // Reset the timer after spawning
+    }
+  }
+}
+
+let predatorSpawningMode = false;
+let lastSpawnTimePredator = 0;
+let spawnRatePredator = 1000 / 2; // 2 predators per second
+
+function togglePredatorSpawningMode() {
+  // if predatorSpawningMode is false and preySpawningMode is true, then disable preySpawningMode
+  if (!predatorSpawningMode && preySpawningMode) {
+    togglePreySpawningMode();
+  }
+
+  predatorSpawningMode = !predatorSpawningMode; // Toggle spawning mode on and off
+  // add a className to the button to indicate the current mode
+  const button = document.getElementById('spawnPredatorButton');
+  // add or remove 'active' to className, but don't replace className
+  button.className = predatorSpawningMode ? 'spawnButtons active' : 'spawnButtons';
+}
+
+function manualSpawnPredator() {
+  // Check for spawning mode and mouse press
+  if (predatorSpawningMode && mouseIsPressed) {
+    if (millis() - lastSpawnTimePredator > spawnRatePredator) {
+        spawnPredatorAt(mouseX, mouseY);
+        lastSpawnTimePredator = millis(); // Reset the timer after spawning
+    }
+  }
+}
+
 function draw() {
     // sets the background color to a light-blue color
     background(173, 216, 230);
 
+    killAllPreys();
+    killAllPredators();
+    manualSpawnPrey();
+    manualSpawnPredator();
+
   // Generate food every 1 seconds
     if (frameCount % Math.floor(FRAMERATE / simulation_speed) === 0) {
-        generateFood(20);
+        // stop generate food when food is > 600
+        if (foods.length < 600) {
+            generateFood(20);
+        }
 
         // Spawn more preys if the number is less than 10% of the initial population
         if (preys.length < NUM_PREYS * 0.1) {
@@ -224,17 +346,6 @@ function drawGraph() {
   }
   endShape();
 
-  // Draw food data
-  // Orange for food
-  // stroke(255, 165, 0);
-  // beginShape();
-  // for (let i = 0; i < foodData.length; i++) {
-  //   let y = mapY(foodData[i])
-  //   console.log('food', height - y);
-  //   vertex(i * xStep, y);
-  // }
-  // endShape();
-
   pop();
 }
 
@@ -261,10 +372,18 @@ function spawnPrey() {
     preys.push(new Prey(random(width), random(height)));
 }
 
+function spawnPreyAt(x, y) {
+    preys.push(new Prey(x, y));
+}
+
 function spawnPredator(num) {
     for (let i = 0; i < num; i++) {
         predators.push(new Predator(random(width), random(height)));
     }
+}
+
+function spawnPredatorAt(x, y) {
+    predators.push(new Predator(x, y));
 }
 
 // Function to display the counts of predator and prey
@@ -406,13 +525,13 @@ class Prey {
             this.foodEaten = 0; // Reset the food eaten count
             // play audio 1-3 randomly for reproducing a prey
             let audio = Math.floor(Math.random() * 3) + 1;
-            if (audio == 1) {
+            if (audio == 1 && !prey_born1.muted) {
                 prey_born1.play().catch(error => console.error("Failed to play muted audio automatically:", error));
             }
-            else if (audio == 2) {
+            else if (audio == 2 && !prey_born2.muted) {
                 prey_born2.play().catch(error => console.error("Failed to play muted audio automatically:", error));
             }
-            else {
+            else if (audio == 3 && !prey_born3.muted){
                 prey_born3.play().catch(error => console.error("Failed to play muted audio automatically:", error));
             }
         }
@@ -488,7 +607,9 @@ class Predator {
       this.starvingTime = (new Date() - this.lastCatchTime) / 1000 * simulation_speed;
       if (this.starvingTime > this.starveLimit) {
         this.isStarved = true;
-        predator_dead.play().catch(error => console.error("Failed to play muted audio automatically:", error));
+        if (!predator_dead.muted){
+          predator_dead.play().catch(error => console.error("Failed to play muted audio automatically:", error));
+        }
       }
       else if (this.starvingTime >= this.starveLimit * 2 / 3) {
         this.Speed = this.speedConstant * 1.2; // Increase the speed when starving
@@ -533,19 +654,19 @@ class Predator {
 
                 // play audio 1-5 randomly for eating a prey
                 let audio = Math.floor(Math.random() * 5) + 1;
-                if (audio == 1) {
+                if (audio == 1 && !audio1.muted) {
                     audio1.play().catch(error => console.error("Failed to play muted audio automatically:", error));
                 }
-                else if (audio == 2) {
+                else if (audio == 2 && !audio2.muted) {
                     audio2.play().catch(error => console.error("Failed to play muted audio automatically:", error));
                 }
-                else if (audio == 3) {
+                else if (audio == 3 && !audio3.muted) {
                     audio3.play().catch(error => console.error("Failed to play muted audio automatically:", error));
                 }
-                else if (audio == 4) {
+                else if (audio == 4 && !audio4.muted) {
                     audio4.play().catch(error => console.error("Failed to play muted audio automatically:", error));
                 }
-                else {
+                else if (audio == 5 && !audio5.muted){
                     audio5.play().catch(error => console.error("Failed to play muted audio automatically:", error));
                 }
             } else {
